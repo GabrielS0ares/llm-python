@@ -4,7 +4,7 @@ import os
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
-from langchain_core.output_parsers import JsonOutputParser
+from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
 
 from langchain_core.globals import set_debug
 
@@ -21,13 +21,13 @@ class Destino(BaseModel):
   cidade: str = Field("A cidade recomendada para visitar")
   motivo: str =  Field("O Motivo da recomendação de cidade")
 
-# Extende as informações do parseador incluindo dentro dele os dados da Tipagem criada
-parseador = JsonOutputParser(pydantic_object=Destino)
-  
+class Restaurantes(BaseModel):
+  cidade: str = Field("A cidade recomendada para visitar")
+  restaurante: str = Field("Restaurante indicados para visitar")
 
-numero_dias = 4
-numero_criancas= 1
-atividade="contemplar a natureza"
+# Extende as informações do parseador incluindo dentro dele os dados da Tipagem criada
+parseador_destino = JsonOutputParser(pydantic_object=Destino)
+parseador_restaurante = JsonOutputParser(pydantic_object=Restaurantes)
 
 # Configuração do modelo, aqui poderia ser qualquer modelo que exista dentro do langchain para uso dos contructors
 modelo = ChatGoogleGenerativeAI(
@@ -43,18 +43,32 @@ prompt_cidade = PromptTemplate(
   """,
   input_variables=["interrese"],
   partial_variables={
-    "formato_de_saida" :parseador.get_format_instructions()
+    "formato_de_saida" :parseador_destino.get_format_instructions()
   }
 )
 
-# Criação de cadeias, é onde a configuração realmente acontecerá, utilizando dos modelos e regras de prompts que foram sugeridas
-cadeia = prompt_cidade | modelo | parseador
-
-modelo = ChatOpenAI(
-  model="gpt-3.5-turbo",
-  temperature=0.5,
-  api_key=api_key
+prompt_restaurante = PromptTemplate(
+  template="""
+  Sugira restaurantes populares entre locais {cidade}.
+  {formato_de_saida}
+  """,
+  partial_variables={
+    "formato_de_saida" :parseador_restaurante.get_format_instructions()
+  }
 )
+
+prompt_cultural = PromptTemplate(
+  template="Sugira atividades e locais culturais em {cidade}"
+)
+
+
+# Criação de cadeias, é onde a configuração realmente acontecerá, utilizando dos modelos e regras de prompts que foram sugeridas
+cadeia_1 = prompt_cidade | modelo | parseador_destino
+cadeia_2 = prompt_restaurante | modelo | parseador_restaurante
+cadeia_3 = prompt_cultural | modelo | StrOutputParser()
+
+# Criação da caia composta onde estará a conversação entre as cadeias informadas
+cadeia = (cadeia_1 | cadeia_2 | cadeia_3)
 
 resposta = cadeia.invoke({
   "interesse" : "praias"
