@@ -1,18 +1,18 @@
 from openai import OpenAI
 from dotenv import load_dotenv
 import os
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
-from langchain.globals import set_debug
 
-set_debug(True)
+
 
 # Lib em pyton para "tipar" os dados que esperado de saida, o interface é o equivalente ao base model
 from pydantic import Field, BaseModel
 
 load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
+api_key = os.getenv("GEMINI_API_KEY")
 
 # Extende o Base model informando os tipos que serão usado, para gerar um parce mais estruturado dos dados enviados
 class Destino(BaseModel):
@@ -28,10 +28,9 @@ numero_criancas= 1
 atividade="contemplar a natureza"
 
 # Configuração do modelo, aqui poderia ser qualquer modelo que exista dentro do langchain para uso dos contructors
-modelo = ChatOpenAI(
-  model="gpt-3.5-turbo",
-  temperature=0.5,
-  api_key=api_key
+modelo = ChatGoogleGenerativeAI(
+    model="gemini-2.5-flash",
+    google_api_key=api_key,
 )
 
 
@@ -59,7 +58,7 @@ resposta = cadeia.invoke({
   "interesse" : "praias"
 })
 
-print(resposta.content)
+print(resposta)
 
 
 
