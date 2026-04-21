@@ -6,7 +6,9 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
 
+from langchain_core.globals import set_debug
 
+set_debug(True)
 
 # Lib em pyton para "tipar" os dados que esperado de saida, o interface é o equivalente ao base model
 from pydantic import Field, BaseModel
