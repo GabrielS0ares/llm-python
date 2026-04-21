@@ -36,7 +36,7 @@ modelo = ChatOpenAI(
 
 
 prompt_cidade = PromptTemplate(
-  """
+  template="""
   Sugira uma cidade dado o meu interesse por {interesse}.
   {formato_de_saida}
   """,
